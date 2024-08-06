@@ -1,0 +1,74 @@
+---
+- name: Install source dependencies for Kamailio
+  package:
+    name: "{{ item }}"
+    state: present
+  with_items: "{{ kamailio_source_dependencies }}"
+
+- name: Create Kamailio Install directory
+  file:
+    path: "{{ kamailio_install_dir }}"
+    state: directory
+    owner: "{{ kamailio_user }}"
+    group: "{{ kamailio_group }}"
+    mode: "0755"
+
+# Due to Kamalio github repo is huge in size, we need to increas http.postBuffer
+# Otherwise, we face with "error: RPC failed; curl 92 HTTP/2 stream 5 was not closed cleanly"
+# TODO: call git using 'command' module and supply "-c http.postBuffer=1048576000" instead of editing git global settings (not critical)
+- name: Increase git http.postgBuffer    # noqa command-instead-of-module
+  command: git config --global http.postBuffer 1048576000
+  changed_when: false
+
+- name: Clone Kamailio GitHub repository
+  git:
+    repo: "{{ kamailio_repo_url }}"
+    dest: "{{ kamailio_download_dir }}/kamailio-{{ kamailio_version}}"
+    version: "{{ kamailio_version }}"
+    depth: 1
+    recursive: false
+    clone: true
+
+- name: Configure Kamailio
+  shell: |
+     umask 0022 && \
+     make PREFIX="{{ kamailio_install_dir }}" -j{{ ansible_processor_cores | default(1) + 1 }} include_modules="{{ kamailio_include_modules }}" cfg
+  args:
+    chdir: "{{ kamailio_download_dir }}/kamailio-{{ kamailio_version }}"
+    creates: "{{ kamailio_download_dir }}/kamailio-{{ kamailio_version}}/src/modules.lst"
+
+- name: Compile Kamailio
+  shell: umask 0022 && make -j{{ ansible_processor_cores | default(1) + 1 }} all
+  args:
+    chdir: "{{ kamailio_download_dir }}/kamailio-{{ kamailio_version }}"
+    creates: "{{ kamailio_download_dir }}/kamailio-{{ kamailio_version}}/src/kamailio"
+
+- name: Install Kamailio
+  shell: umask 0022 && make install
+  args:
+    chdir: "{{ kamailio_download_dir }}/kamailio-{{ kamailio_version }}"
+    creates: "{{ kamailio_install_dir }}/sbin/kamailio"
+  notify: restart kamailio
+
+- name: Register Kamailio binaries
+  command: ls -1 {{ kamailio_install_dir }}/sbin
+  register: _kamailio_binaries
+  changed_when: false
+
+- name: Add kamailio binaries to alternatives
+  alternatives:
+    name: "{{ item }}"
+    path: "{{ kamailio_install_dir }}/sbin/{{ item }}"
+    link: "/usr/bin/{{ item }}"
+  with_items: "{{ _kamailio_binaries.stdout_lines }}"
+
+# Cleanup Source Files
+- name: Clean up the source files
+  file:
+    path: "{{ item }}"
+    state: absent
+  with_items:
+    - "{{ kamailio_download_dir }}/kamailio-{{ kamailio_version }}"
+    - "{{ kamailio_download_dir }}/kamailio-{{ kamailio_version }}.tar.gz"
+  when: kamailio_cleanup_downloads|bool
+  become: true

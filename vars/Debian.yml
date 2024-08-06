@@ -1,0 +1,17 @@
+---
+# OS Specific variables
+
+kamailio_source_dependencies:
+  - gcc
+  - g++
+  - make
+  - git
+  - flex
+  - bison
+  - make
+  - autoconf
+  - pkg-config
+  - libssl-dev
+  - libcurl4-openssl-dev
+  - libxml2
+  - libpcre3

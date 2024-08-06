@@ -1,0 +1,12 @@
+# {{ ansible_managed }}
+
+{{ kamailio_log_dir }}/{{ kamailio_log_file }} {
+    missingok
+    notifempty
+    compress
+    delaycompress
+    copytruncate
+    daily
+    dateext
+    rotate {{ kamailio_logrotate_days }}
+}

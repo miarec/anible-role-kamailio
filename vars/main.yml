@@ -1,0 +1,5 @@
+---
+
+kamailio_source_dependencies:
+  - gcc
+  - git

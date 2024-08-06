@@ -1,0 +1,62 @@
+---
+
+- name: Create Kamailio Log directory
+  file:
+    path: "{{ kamailio_log_dir }}"
+    state: directory
+    owner: "{{ kamailio_user }}"
+    group: "{{ kamailio_group }}"
+    mode: "0755"
+
+- name: Create Kamailio Log file with proper permissions
+  file:
+    path: "{{ kamailio_log_dir }}/{{ kamailio_log_file }}"
+    state: touch
+    access_time: preserve
+    modification_time: preserve
+    owner: "{{ kamailio_user }}"
+    group: "{{ kamailio_group }}"
+    mode: "0755"
+
+- name: Configure Rsyslog for Kamailio
+  template:
+    src: rsyslog.conf.j2
+    dest: "/etc/rsyslog.d/{{ kamailio_service_name }}.conf"
+    owner: "root"
+    group: "root"
+    mode: "0644"
+  notify: 
+    - restart rsyslog
+
+- name: Configure Kamailio logrotate
+  template:
+    src: "logrotate.conf.j2"
+    dest: "/etc/logrotate.d/{{ kamailio_service_name}}"
+    mode: "0644"
+
+
+- name: Create configuration file
+  copy:
+    dest: "{{ kamailio_config_file }}"
+    content: "{{ kamailio_config_file_content }}"
+    owner: "{{ kamailio_user }}"
+    group: "{{ kamailio_group }}"
+    mode: "0644"
+  notify: 
+    - restart kamailio
+
+- name: Create Kamailio SystemD service
+  template:
+    src: kamailio.service.j2
+    dest: "/etc/systemd/system/{{ kamailio_service_name }}.service"
+    owner: "root"
+    group: "root"
+    mode: "0644"
+  notify: 
+    - reload systemd
+    - restart kamailio
+
+- name: Enable Kamailio service
+  service:
+    name: "{{ kamailio_service_name }}"
+    enabled: true

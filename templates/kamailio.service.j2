@@ -1,0 +1,32 @@
+# {{ ansible_managed }}
+
+[Unit]
+Description=Kamailio
+Wants=network-online.target
+After=syslog.target network-online.target
+Documentation=https://www.kamailio.org
+
+[Service]
+Type=forking
+
+User={{ kamailio_user }}
+Group={{ kamailio_user }}
+
+RuntimeDirectory=kamailio
+RuntimeDirectoryMode=0770
+PIDFile=/run/kamailio/kamailio.pid
+
+ExecStart={{ kamailio_install_dir }}/sbin/kamailio \
+    -P /run/kamailio/kamailio.pid \
+    -f {{ kamailio_config_file }} \
+    -m {{ kamailio_shm_size }} -M {{ kamailio_pkg_size }} \
+    --atexit no
+
+# necessary for chown of control files e.g. for jsonrpcs and ctl modules
+AmbientCapabilities=CAP_CHOWN
+
+Restart=always
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target

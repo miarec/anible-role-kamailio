@@ -1,0 +1,24 @@
+---
+- name: Set OS Specific variables
+  include_tasks: preflight.yml
+  tags:
+    - install
+    - configure
+
+- name: Check if Kamailio is installed
+  command: "which {{ kamailio_install_dir }}/sbin/kamailio"
+  register: kamailio_exists
+  failed_when: false
+  ignore_errors: true
+  changed_when: false
+  tags:
+    - install
+
+- include_tasks: install_from_source.yml    # noqa name[missing]
+  when: kamailio_force_install|bool or kamailio_exists.rc != 0
+  tags:
+    - install
+
+- include_tasks: configure.yml    # noqa name[missing]
+  tags:
+    - configure

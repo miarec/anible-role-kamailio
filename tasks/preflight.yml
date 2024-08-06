@@ -1,0 +1,31 @@
+---
+- name: Include OS specific vars.
+  include_vars: "{{ item }}"
+  with_first_found:
+    - "../vars/{{ ansible_distribution }}-{{ ansible_distribution_major_version }}.yml"
+    - "../vars/{{ ansible_distribution }}.yml"
+    - "../vars/{{ ansible_os_family }}.yml"
+
+- name: 'Check if variable "kamailio_config_file_content" is specified'
+  assert:
+    that:
+      - kamailio_config_file_content
+    fail_msg: The variable "kamailio_config_file_content" must be provided
+
+- name: Add Kamailio group
+  group:
+    name: "{{ kamailio_group }}"
+    state: present
+    system: true
+  when: kamailio_group != "root"
+
+- name: Add Kamailio user
+  user:
+    name: "{{ kamailio_user }}"
+    group: "{{ kamailio_group }}"
+    comment: "Kamailio"
+    shell: /bin/false
+    system: true
+    createhome: false
+    home: "{{ kamailio_install_dir }}"
+  when: kamailio_user != "root"

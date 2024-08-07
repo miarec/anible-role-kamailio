@@ -4,8 +4,8 @@
   file:
     path: "{{ kamailio_log_dir }}"
     state: directory
-    owner: "{{ kamailio_user }}"
-    group: "{{ kamailio_group }}"
+    owner: "{{ syslog_user }}"
+    group: "{{ syslog_group }}"
     mode: "0755"
 
 - name: Create Kamailio Log file with proper permissions
@@ -14,8 +14,8 @@
     state: touch
     access_time: preserve
     modification_time: preserve
-    owner: "{{ kamailio_user }}"
-    group: "{{ kamailio_group }}"
+    owner: "{{ syslog_user }}"
+    group: "{{ syslog_group }}"
     mode: "0755"
 
 - name: Configure Rsyslog for Kamailio

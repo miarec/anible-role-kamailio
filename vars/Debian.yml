@@ -15,3 +15,7 @@ kamailio_source_dependencies:
   - libcurl4-openssl-dev
   - libxml2
   - libpcre3
+
+
+syslog_user: syslog
+syslog_group: adm

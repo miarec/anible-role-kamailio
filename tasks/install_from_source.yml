@@ -3,6 +3,7 @@
   package:
     name: "{{ item }}"
     state: present
+    update_cache: true
   with_items: "{{ kamailio_source_dependencies }}"
 
 - name: Create Kamailio Install directory
@@ -16,7 +17,7 @@
 # Due to Kamalio github repo is huge in size, we need to increas http.postBuffer
 # Otherwise, we face with "error: RPC failed; curl 92 HTTP/2 stream 5 was not closed cleanly"
 # TODO: call git using 'command' module and supply "-c http.postBuffer=1048576000" instead of editing git global settings (not critical)
-- name: Increase git http.postgBuffer    # noqa command-instead-of-module
+- name: Increase git http.postBuffer    # noqa command-instead-of-module
   command: git config --global http.postBuffer 1048576000
   changed_when: false
 
